@@ -79,14 +79,8 @@
 
         section { scroll-margin-top: 80px; margin-bottom: 60px; }
         h1 { font-size: 2.2rem; }
-        h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-top: 40px; color: var(--accent); }
+        h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-top: 40px; color: var(--text); }
         
-        /* Tables (Scrollable on Mobile) */
-        .table-wrapper { width: 100%; overflow-x: auto; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th, td { padding: 14px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background: rgba(255,255,255,0.05); font-weight: 600; }
-
         /* UI Elements */
         .tip, .warning {
             padding: 16px; margin: 20px 0; border-radius: 8px; border-left: 4px solid;
@@ -97,10 +91,30 @@
         pre { 
             background: var(--code-bg); padding: 16px; border-radius: 8px; 
             border: 1px solid var(--border); overflow-x: auto; 
-            font-size: 0.9rem;
+            font-size: 0.9rem; margin: 15px 0 0 0;
         }
+        
+        code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
 
-        .method { color: var(--accent); font-family: monospace; font-weight: bold; }
+        /* Method Blocks */
+        .method-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .method-block h3 {
+            margin-top: 0;
+            color: var(--accent);
+            border-bottom: none;
+            padding-bottom: 0;
+            font-family: monospace;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        .method-block ul { margin: 10px 0; padding-left: 20px; }
+        .method-block li { margin-bottom: 5px; }
 
         /* --- MOBILE QUERIES --- */
         @media (max-width: 850px) {
@@ -114,6 +128,7 @@
                 width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 998;
             }
             .nav-overlay.active { display: block; }
+            .method-block { padding: 16px; }
         }
     </style>
 </head>
@@ -129,90 +144,243 @@
 <nav id="sidebar">
     <h1>AndI Lua API</h1>
     <ul>
-        <li><a href="#ai" onclick="toggleMenu()">AI Models</a></li>
+        <li><a href="#intro" onclick="toggleMenu()">Introduction</a></li>
+        <li><a href="#ai" onclick="toggleMenu()">Artificial Intelligence</a></li>
         <li><a href="#camera" onclick="toggleMenu()">Camera & Vision</a></li>
         <li><a href="#onnx" onclick="toggleMenu()">ONNX ML</a></li>
         <li><a href="#sensors" onclick="toggleMenu()">Hardware Sensors</a></li>
-        <li><a href="#serial" onclick="toggleMenu()">Serial/USB</a></li>
+        <li><a href="#serial" onclick="toggleMenu()">Serial / USB</a></li>
+        <li><a href="#fs" onclick="toggleMenu()">File System</a></li>
         <li><a href="#ui" onclick="toggleMenu()">User Interface</a></li>
-        <li><a href="#sample" onclick="toggleMenu()">Sample Script</a></li>
     </ul>
 </nav>
 
 <main>
-    <section>
-        <h1>Developer Documentation</h1>
-        <p>Integrate device hardware, custom machine learning, and AI chat capabilities into your AndI scripts.</p>
+    <section id="intro">
+        <h1>AndI Lua API Documentation</h1>
+        <p>Welcome to the AndI Lua Scripting API. This document outlines all the built-in native functions available to your Lua scripts, allowing you to access the device's physical hardware, run local AI models, and manipulate the application's UI.</p>
 
         <div class="tip">
-            <strong>Note:</strong> All native functions run synchronously in the isolate, while heavy compute (Llama/Camera) is offloaded to the Main Dart thread to ensure 60fps performance.
+            <strong>Tip:</strong> All functions execute synchronously in the Lua Isolate. However, heavy tasks (like <code>llamaGenerate</code> or <code>openCamera</code>) delegate their heavy lifting to the Main Dart Isolate to prevent your scripts from freezing.
         </div>
     </section>
 
     <section id="ai">
         <h2>🤖 Artificial Intelligence</h2>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr><th>Method</th><th>Description</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code class="method">llamaGenerate(prompt)</code></td>
-                        <td>Runs local GGUF Llama models on-device.</td>
-                    </tr>
-                    <tr>
-                        <td><code class="method">geminiGenerate(prompt)</code></td>
-                        <td>Connects to Google Gemini API for high-reasoning tasks.</td>
-                    </tr>
-                </tbody>
-            </table>
+        
+        <div class="method-block">
+            <h3>llamaGenerate(prompt)</h3>
+            <p>Prompts the locally loaded GGUF Llama model.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>prompt</code> (String)</li>
+                <li><strong>Returns:</strong> <code>nil</code>. The output is streamed asynchronously to the App Terminal.</li>
+            </ul>
+            <pre><code class="language-lua">log("Asking Llama...")
+llamaGenerate("Write a haiku about a robot.")</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>geminiGenerate(prompt)</h3>
+            <p>Prompts the Google Gemini API (requires network connection).</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>prompt</code> (String)</li>
+                <li><strong>Returns:</strong> <code>nil</code>. The output is streamed asynchronously to the App Terminal.</li>
+            </ul>
+            <pre><code class="language-lua">geminiGenerate("What is the distance to the moon?")</code></pre>
         </div>
     </section>
 
     <section id="camera">
         <h2>📷 Camera & Computer Vision</h2>
-        <p>Capture frames into a high-performance Double Buffer.</p>
-        <pre><code class="language-lua">openCamera(0, "medium") -- Open rear cam
-local frame = getCameraFrame() -- Non-blocking read
-if frame then
-    log("Resolution: " .. frame.width .. "x" .. frame.height)
+
+        <div class="method-block">
+            <h3>openCamera(cameraIndex, [resolution])</h3>
+            <p>Initializes a native camera stream and pipes it into the high-performance Double Buffer.</p>
+            <ul>
+                <li><strong>Parameters:</strong> 
+                    <ul>
+                        <li><code>cameraIndex</code> (Integer): The hardware camera index (usually <code>0</code> for rear, <code>1</code> for front).</li>
+                        <li><code>resolution</code> (String, Optional): <code>"low"</code>, <code>"medium"</code>, <code>"high"</code>, <code>"veryHigh"</code>, <code>"ultraHigh"</code>, <code>"max"</code>. Defaults to <code>"medium"</code>.</li>
+                    </ul>
+                </li>
+                <li><strong>Returns:</strong> <code>nil</code></li>
+            </ul>
+            <pre><code class="language-lua">openCamera(0, "low") -- Fast 320p stream for CV processing</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>getCameraFrame()</h3>
+            <p>Reads the latest frame from the native Double Buffer without blocking the UI.</p>
+            <ul>
+                <li><strong>Returns:</strong> A Table <code>{width: Int, height: Int, format: Int, data: String}</code> or <code>nil</code> if no frame is ready. <br><em>Format:</em> <code>0</code> for BGRA8888, <code>1</code> for YUV420.</li>
+            </ul>
+            <pre><code class="language-lua">while true do
+  local frame = getCameraFrame()
+  if frame ~= nil then
+    log("Got frame: " .. frame.width .. "x" .. frame.height)
+    -- Feed frame.data into an ONNX model!
+  end
 end</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>closeCamera()</h3>
+            <p>Disposes the camera stream and frees resources.</p>
+            <pre><code class="language-lua">closeCamera()</code></pre>
+        </div>
     </section>
 
     <section id="onnx">
         <h2>🧠 ONNX Machine Learning</h2>
-        <p>Load and run <code>.onnx</code> models directly in the C-Heap for real-time inference.</p>
-        <ul>
-            <li><code class="method">onnxLoad(path)</code>: Prepares model memory.</li>
-            <li><code class="method">onnxRun(path, json)</code>: Executes inference.</li>
-            <li><code class="method">onnxDispose(path)</code>: Frees C-Heap memory.</li>
-        </ul>
+
+        <div class="method-block">
+            <h3>onnxLoad(modelPath)</h3>
+            <p>Loads an <code>.onnx</code> neural network file into the native C-Heap.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>modelPath</code> (String) - Absolute file path.</li>
+            </ul>
+            <pre><code class="language-lua">onnxLoad("/path/to/model.onnx")</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>onnxRun(modelPath, inputJson)</h3>
+            <p>Executes the ONNX model with the given input tensors.</p>
+            <ul>
+                <li><strong>Parameters:</strong>
+                    <ul>
+                        <li><code>modelPath</code> (String) - Path of the previously loaded model.</li>
+                        <li><code>inputJson</code> (String) - JSON formatted tensor data.</li>
+                    </ul>
+                </li>
+                <li><strong>Returns:</strong> <code>nil</code>. Output is sent to the App Terminal.</li>
+            </ul>
+            <pre><code class="language-lua">onnxRun("/path/to/model.onnx", '{"input_1": [[0.5, 0.2]]}')</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>onnxDispose(modelPath)</h3>
+            <p>Safely unloads the ONNX model from the C-Heap to prevent memory leaks.</p>
+            <pre><code class="language-lua">onnxDispose("/path/to/model.onnx")</code></pre>
+        </div>
     </section>
 
     <section id="sensors">
         <h2>📟 Hardware Sensors</h2>
         <div class="warning">
-            <strong>Battery Warning:</strong> You must call <code>disposeSensors()</code> when finished to power down the IMU hardware.
+            <strong>Important:</strong> Hardware sensors drain battery. You <strong>must</strong> call <code>initSensors()</code> before reading data, and <code>disposeSensors()</code> when finished.
         </div>
-        <p>Access Accelerometer, Gyroscope, and Magnetometer data in <code>O(1)</code> time.</p>
+
+        <div class="method-block">
+            <h3>initSensors()</h3>
+            <p>Wakes up the physical IMU chips and starts piping data into Native Memory.</p>
+            <pre><code class="language-lua">initSensors()</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>getAccelerometer() / getGyroscope() / getMagnetometer()</h3>
+            <p>Reads the latest XYZ vectors from the Native Shared Memory in <code>O(1)</code> time.</p>
+            <ul>
+                <li><strong>Returns:</strong> A Table <code>{ [1] = x, [2] = y, [3] = z }</code></li>
+            </ul>
+            <pre><code class="language-lua">initSensors()
+while true do
+  local acc = getAccelerometer()
+  if acc[2] > 9.0 then
+    setEmotion("happy") -- Phone is upright!
+  end
+end</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>disposeSensors()</h3>
+            <p>Powers down the hardware streams.</p>
+            <pre><code class="language-lua">disposeSensors()</code></pre>
+        </div>
     </section>
 
-    <section id="sample">
-        <h2>🚀 Full Integration Example</h2>
-        <p>Combining sensors and UI for an "Orientation-Aware" robot personality:</p>
-        <pre><code class="language-lua">initSensors() 
-while true do
-    local acc = getAccelerometer()
-    
-    -- If phone is tilted up (Y-axis > 9)
-    if acc[2] > 9.0 then
-        setEmotion("happy")
-        showToast("Feeling good!")
-    else
-        setEmotion("normal")
-    end
+    <section id="serial">
+        <h2>🔌 Serial / USB Communication (AndI)</h2>
+
+        <div class="method-block">
+            <h3>serialInit()</h3>
+            <p>Initializes the USB-OTG connection to the connected microcontroller.</p>
+            <pre><code class="language-lua">serialInit()</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>serialWrite(data)</h3>
+            <p>Sends a string payload over the TX line.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>data</code> (String)</li>
+            </ul>
+            <pre><code class="language-lua">serialWrite("M1: 255\n")</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>serialRead()</h3>
+            <p>Synchronously drains the Native Lock-Free Ring Buffer for incoming RX bytes.</p>
+            <ul>
+                <li><strong>Returns:</strong> String containing the read bytes, or <code>nil</code> if the buffer is empty.</li>
+            </ul>
+            <pre><code class="language-lua">local data = serialRead()
+if data ~= nil then
+  log("Received from Arduino: " .. data)
 end</code></pre>
+        </div>
+    </section>
+
+    <section id="fs">
+        <h2>📂 File System</h2>
+
+        <div class="method-block">
+            <h3>readFile(path)</h3>
+            <p>Reads a file from the device storage.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>path</code> (String)</li>
+                <li><strong>Returns:</strong> String contents, or <code>nil</code> if the file doesn't exist.</li>
+            </ul>
+            <pre><code class="language-lua">local text = readFile("/sdcard/config.txt")</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>listFiles(path)</h3>
+            <p>Lists all files in a directory.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>path</code> (String)</li>
+                <li><strong>Returns:</strong> String of paths separated by newlines, or <code>nil</code>.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="ui">
+        <h2>🎭 User Interface</h2>
+
+        <div class="method-block">
+            <h3>setEmotion(emotion)</h3>
+            <p>Instantly overrides the global <code>RoboticEyeController</code> emotion state. Built-in flood protection prevents UI crashing even if called in an infinite loop.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>emotion</code> (String) - <code>"normal"</code>, <code>"angry"</code>, <code>"happy"</code>.</li>
+            </ul>
+            <pre><code class="language-lua">setEmotion("angry")</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>showToast(msg)</h3>
+            <p>Displays an Android-style Toast pop-up on the screen.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>msg</code> (String)</li>
+            </ul>
+            <pre><code class="language-lua">showToast("Script Initialization Complete!")</code></pre>
+        </div>
+
+        <div class="method-block">
+            <h3>log(msg)</h3>
+            <p>Prints text directly to the AndI App's in-built script terminal.</p>
+            <ul>
+                <li><strong>Parameters:</strong> <code>msg</code> (String)</li>
+            </ul>
+            <pre><code class="language-lua">log("Variable value is: " .. x)</code></pre>
+        </div>
     </section>
 </main>
 

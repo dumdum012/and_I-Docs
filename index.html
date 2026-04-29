@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AndI Lua API Documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --sidebar-bg: #161b22;
+            --text: #c9d1d9;
+            --accent: #58a6ff;
+            --border: #30363d;
+            --code-bg: #010409;
+            --tip: #238636;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            line-height: 1.6;
+        }
+        nav {
+            width: 260px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        nav h1 { font-size: 1.2rem; color: var(--accent); }
+        nav ul { list-style: none; padding: 0; }
+        nav li { margin: 10px 0; }
+        nav a { color: var(--text); text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
+        nav a:hover { color: var(--accent); }
+        main {
+            margin-left: 300px;
+            padding: 40px;
+            max-width: 900px;
+        }
+        .tip {
+            background: rgba(35, 134, 54, 0.1);
+            border-left: 4px solid var(--tip);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-top: 40px; }
+        pre { background: var(--code-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--border); overflow-x: auto; }
+        code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 0.9rem; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
+        th { background: var(--sidebar-bg); }
+        .method { color: var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>AndI API</h1>
+    <ul>
+        <li><a href="#ai">Artificial Intelligence</a></li>
+        <li><a href="#camera">Camera & Vision</a></li>
+        <li><a href="#onnx">ONNX ML</a></li>
+        <li><a href="#sensors">Hardware Sensors</a></li>
+        <li><a href="#serial">Serial/USB</a></li>
+        <li><a href="#ui">User Interface</a></li>
+        <li><a href="#sample">Sample Script</a></li>
+    </ul>
+</nav>
+
+<main>
+    <h1>AndI Lua Scripting API</h1>
+    <p>Welcome to the AndI Lua Scripting API. Access physical hardware, local AI models, and UI components synchronously within the Lua Isolate.</p>
+
+    <div class="tip">
+        <strong>Tip:</strong> Heavy tasks like <code>llamaGenerate</code> or <code>openCamera</code> delegate work to the Main Dart Isolate to prevent script freezing.
+    </div>
+
+    <section id="ai">
+        <h2>🤖 Artificial Intelligence</h2>
+        <p>Interact with local and cloud-based models.</p>
+        <table>
+            <tr><th>Function</th><th>Description</th></tr>
+            <tr>
+                <td><code class="method">llamaGenerate(prompt)</code></td>
+                <td>Prompts the local GGUF Llama model. Output streams asynchronously to the Terminal.</td>
+            </tr>
+            <tr>
+                <td><code class="method">geminiGenerate(prompt)</code></td>
+                <td>Prompts Google Gemini API (requires network).</td>
+            </tr>
+        </table>
+    </section>
+
+    <section id="camera">
+        <h2>📷 Camera & Computer Vision</h2>
+        <p>Access the high-performance native Double Buffer.</p>
+        <ul>
+            <li><code class="method">openCamera(index, res)</code>: Index 0 for rear, 1 for front. Resolutions: low to max.</li>
+            <li><code class="method">getCameraFrame()</code>: Non-blocking read. Returns <code>{width, height, format, data}</code>.</li>
+            <li><code class="method">closeCamera()</code>: Disposes resources.</li>
+        </ul>
+    </section>
+
+    <section id="onnx">
+        <h2>🧠 ONNX Machine Learning</h2>
+        <p>Load models into the native C-Heap for low-latency inference.</p>
+        <pre><code class="language-lua">-- Load and run a model
+onnxLoad("/path/to/model.onnx") --
+onnxRun("/path/to/model.onnx", '{"input": [[0.5]]}') --
+onnxDispose("/path/to/model.onnx") --</code></pre>
+    </section>
+
+    <section id="sensors">
+        <h2>📟 Hardware Sensors</h2>
+        <p>Read XYZ vectors from Native Shared Memory in <code>O(1)</code> time.</p>
+        <div class="tip" style="border-color: #f85149; background: rgba(248, 81, 73, 0.1);">
+            <strong>Important:</strong> Call <code>initSensors()</code> before use and <code>disposeSensors()</code> after to save battery.
+        </div>
+        <ul>
+            <li><code>getAccelerometer()</code>, <code>getGyroscope()</code>, <code>getMagnetometer()</code>.</li>
+        </ul>
+    </section>
+
+    <section id="sample">
+        <h2>🚀 Sample Script: Vision Logic</h2>
+        <p>This script combines camera access with UI feedback based on orientation.</p>
+        <pre><code class="language-lua">initSensors() --
+openCamera(0, "low") --
+
+while true do
+    local acc = getAccelerometer() --
+    if acc[2] > 9.0 then
+        setEmotion("happy") -- Phone is upright
+    end
+    
+    local frame = getCameraFrame() --
+    if frame ~= nil then
+        log("Processed frame: " .. frame.width) --
+    end
+end</code></pre>
+    </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
